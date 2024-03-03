@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="./styles/output.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+    <div class="flex w-full bg-gray-200 relative p-10">
+        <div class="drag-container w-1/2 p-20 mr-10  h-[500px]">
+
+            <div class="draggable-option" draggable="true" data-choice="radio">
+                <i class="fas fa-dot-circle"></i>
+                <span>Multiple Choice (radio)</span>
+            </div>
+            <div class="draggable-option" draggable="true" data-choice="checkbox">
+                <i class="fas fa-check-square"></i>
+                <span>Multiple Choice (checkbox)</span>
+            </div>
+            <div class="draggable-option" draggable="true" data-choice="dropdown">
+                <i class="fas fa-caret-square-down"></i>
+                <span>Dropdown</span>
+            </div>
+            <div class="draggable-option" draggable="true" data-choice="image">
+                <i class="fas fa-image"></i>
+                <span>Image</span>
+            </div>
+            <div class="draggable-option" draggable="true" data-choice="text-field">
+                <i class="fas fa-font"></i>
+                <span>Text Field</span>
+            </div>
+            <div class="draggable-option" draggable="true" data-choice="star-rating">
+                <i class="fas fa-star"></i>
+                <span>Star Rating</span>
+            </div>
+        </div>
+
+        <div class="drop-container w-1/2 ">
+            <div
+                class="flex p-5 flex-col bg-white justify-center items-center border-t-2 border-orange-500 border-l-2 border-r-2 border-solid">
+                <input class="w-full mb-5 text-3xl border-none outline-none focus:border-none pb-1  border-gray-400"
+                    type="text" placeholder="Untitled Form">
+                <input class="w-full border-none outline-none focus:border-none pb-1  border-gray-400" type="text"
+                    placeholder="Form Description">
+            </div>
+
+
+
+        </div>
+    </div>
+    <script src="./main.js"></script>
+</body>
+
+</html>
