@@ -27,55 +27,10 @@ function createForm() {
     // Add delete button to remove the form
     removeFormButton(form);
 
+    // Make the form container draggable
+    makeFormContainerDraggable(form);
 
 }
-//  // Make the form container draggable
-//  makeElementDraggable(form);
-// // Function to make an element draggable with snapping (up and down)
-// function makeElementDraggable(element) {
-//     let startY, initialY, isDragging = false;
-//     const snapHeight = 150; // Adjust this value for the desired spacing
-
-//     element.addEventListener('mousedown', function (event) {
-//         isDragging = true;
-
-//         // Store the initial values
-//         startY = event.clientY;
-//         initialY = element.offsetTop;
-
-//         // Add event listeners for mousemove and mouseup
-//         document.addEventListener('mousemove', handleMouseMove);
-//         document.addEventListener('mouseup', handleMouseUp);
-//     });
-
-//     function handleMouseMove(event) {
-//         if (isDragging) {
-//             // Calculate the new position based on mouse movement
-//             const deltaY = event.clientY - startY;
-//             const newOffset = initialY + deltaY;
-
-//             // Snap the element to a multiple of snapHeight
-//             const snappedOffset = Math.round(newOffset / snapHeight) * snapHeight;
-
-//             // Update the element's position within the parent container
-//             const parentHeight = element.parentElement.offsetHeight;
-//             const elementHeight = element.offsetHeight;
-
-//             if (snappedOffset >= 0 && snappedOffset + elementHeight <= parentHeight) {
-//                 element.style.top = snappedOffset + 'px';
-//             }
-//         }
-//     }
-
-//     function handleMouseUp() {
-//         isDragging = false;
-
-//         // Remove event listeners when dragging is finished
-//         document.removeEventListener('mousemove', handleMouseMove);
-//         document.removeEventListener('mouseup', handleMouseUp);
-//     }
-// }
-
 
 // Create form container
 function createFormContainer() {
@@ -84,6 +39,50 @@ function createFormContainer() {
     return form;
 }
 
+// Function to make the form container draggable
+function makeFormContainerDraggable(form) {
+    form.draggable = true;
+
+    form.addEventListener('dragstart', function (event) {
+        event.dataTransfer.setData('text/plain', ''); // Set data to enable drag
+        event.target.classList.add('dragging');
+    });
+
+    form.addEventListener('dragover', function (event) {
+        event.preventDefault();
+        const draggedElement = document.querySelector('.dragging');
+        const dropContainer = event.target.closest('.drop-container');
+
+        if (dropContainer && draggedElement !== event.target) {
+            const nextElement = getNextElement(event.clientY, event.target);
+            dropContainer.insertBefore(draggedElement, nextElement);
+        }
+    });
+
+    form.addEventListener('dragend', function () {
+        document.querySelectorAll('.dragging').forEach(dragged => {
+            dragged.classList.remove('dragging');
+            dragged.style.transition = ''; // Reset transition after dragging
+        });
+    });
+
+    form.addEventListener('transitionend', function () {
+        form.style.transition = ''; // Reset transition after swapping cards
+    });
+}
+
+// Function to get the next element for rearrangement
+function getNextElement(y, currentElement) {
+    const elements = [...currentElement.parentElement.children];
+    return elements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset, element: child };
+        }
+        return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
 
 
 // Create question input field
@@ -98,7 +97,7 @@ function createQuestionInput() {
 // Function to create a checkbox for must-answer question
 function createMustAnswerCheckbox() {
     const checkboxContainer = document.createElement('div');
-    checkboxContainer.classList.add('flex', 'items-center');
+    checkboxContainer.classList.add('flex', 'items-center', 'mb-2', 'justify-end', 'absolute', 'top-0', 'right-0', 'mr-10');
 
     const mustAnswerCheckbox = document.createElement('input');
     mustAnswerCheckbox.type = 'checkbox';
@@ -110,11 +109,10 @@ function createMustAnswerCheckbox() {
     checkboxContainer.appendChild(mustAnswerCheckbox);
     checkboxContainer.appendChild(mustLabel);
 
-    // Style the container if needed
-    checkboxContainer.classList.add('absolute', 'top-2', 'right-10'); // Position the container
-
     return checkboxContainer;
 }
+
+
 
 
 // Create options container
@@ -181,12 +179,15 @@ function removeFormButton(form) {
 function createLikertForm() {
     // Create form elements
     const form = createFormContainer();
+    const mustAnswerCheckbox = createMustAnswerCheckbox();
     const questionInput = createQuestionInput();
     const likertContainer = createLikertContainer();
 
     // Append form elements
     form.appendChild(questionInput);
     form.appendChild(likertContainer);
+    form.appendChild(mustAnswerCheckbox);
+
 
     // Append form to drop container
     const dropContainer = document.querySelector(DROP_CONTAINER_SELECTOR);
@@ -194,12 +195,18 @@ function createLikertForm() {
 
     // Add delete button to remove the form
     removeFormButton(form);
+
+    // Make the form container draggable
+    makeFormContainerDraggable(form);
 }
 
 // Create Likert scale container
 function createLikertContainer() {
     const likertContainer = document.createElement('div');
     likertContainer.classList.add('likert-container', 'p-5', 'my-5', 'bg-white', 'border-2', 'border-gray-400', 'rounded-md');
+
+
+
 
     // Likert scale points
     const likertPoints = ['Agree', 'Neutral', 'Disagree'];
@@ -221,53 +228,18 @@ function createLikertContainer() {
     return likertContainer;
 }
 
-// Function to add delete button to remove the Likert scale
-function removeLikertScaleButton(likertContainer) {
-    const removeLikertBtn = document.createElement('button');
-    removeLikertBtn.innerHTML = 'Remove Likert Scale</i>';
-    removeLikertBtn.classList.add('absolute', 'bottom-5', 'right-5', 'mt-1', 'mr-1', 'bg-gray-200', 'hover:text-red-800', 'focus:outline-none', 'px-5', 'py-2');
-    removeLikertBtn.addEventListener('click', () => {
-        // likertContainer.remove();
-    });
-    likertContainer.appendChild(removeLikertBtn);
-}
-
-// Event listener when the DOM content is loaded
-document.addEventListener("DOMContentLoaded", function () {
-    // Get draggable options and drop container
-    const draggableOptions = document.querySelectorAll(DRAGGABLE_OPTION_SELECTOR);
-    const dropContainer = document.querySelector(DROP_CONTAINER_SELECTOR);
-
-    // Add dragstart event listener to draggable options
-    draggableOptions.forEach(option => {
-        option.addEventListener("dragstart", function (event) {
-            event.dataTransfer.setData("choice", option.getAttribute("data-choice"));
-        });
-    });
-
-    // Add dragover event listener to drop container
-    dropContainer.addEventListener("dragover", function (event) {
-        event.preventDefault();
-    });
-
-    // Add drop event listener to drop container
-    dropContainer.addEventListener("drop", function (event) {
-        event.preventDefault();
-        const choice = event.dataTransfer.getData("choice");
-
-
-    });
-});
 
 // Function to create a Likert scale (5 points)
 function createLikertForm5() {
     // Create form elements
     const form = createFormContainer();
+    const mustAnswerCheckbox = createMustAnswerCheckbox();
     const questionInput = createQuestionInput();
     const likertContainer = createLikertContainer5();
 
     // Append form elements
     form.appendChild(questionInput);
+    form.appendChild(mustAnswerCheckbox);
     form.appendChild(likertContainer);
 
     // Append form to drop container
@@ -276,14 +248,15 @@ function createLikertForm5() {
 
     // Add delete button to remove the form
     removeFormButton(form);
+
+    // Make the form container draggable
+    makeFormContainerDraggable(form);
 }
 
 // Create Likert scale container (5 points)
 function createLikertContainer5() {
     const likertContainer = document.createElement('div');
     likertContainer.classList.add('likert-container', 'p-5', 'my-5', 'bg-white', 'border-2', 'border-gray-400', 'rounded-md');
-
-
 
     // Likert scale points (5 points)
     const likertPoints = ['Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'];
@@ -299,8 +272,6 @@ function createLikertContainer5() {
         likertContainer.appendChild(likertOption);
     });
 
-    // Add delete button to remove the Likert scale
-    // removeLikertScaleButton(likertContainer);
 
     return likertContainer;
 }
@@ -310,6 +281,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Get draggable options and drop container
     const draggableOptions = document.querySelectorAll(DRAGGABLE_OPTION_SELECTOR);
     const dropContainer = document.querySelector(DROP_CONTAINER_SELECTOR);
+
 
     // Add dragstart event listener to draggable options
     draggableOptions.forEach(option => {
@@ -335,7 +307,235 @@ document.addEventListener("DOMContentLoaded", function () {
             createLikertForm();
         } else if (choice === "likert5") {
             createLikertForm5();
+        } else if (choice === "star-rating") {
+            createStarRatingForm();
+        } else if (choice === "text-field") {
+            createTextFieldForm();
+        } else if (choice === "image") {
+            createImageForm();
+        } else if (choice === "upload-question") {
+            createUploadQuestionForm();
         }
         // Handle other choices if needed
     });
 });
+
+// Function to create a form with Star Rating
+function createStarRatingForm() {
+    // Create form elements
+    const form = createFormContainer();
+    const mustAnswerCheckbox = createMustAnswerCheckbox();
+    const questionInput = createQuestionInput();
+    const starRatingContainer = createStarRatingContainer();
+
+    // Append form elements
+    form.appendChild(questionInput);
+    form.appendChild(mustAnswerCheckbox);
+    form.appendChild(starRatingContainer);
+
+    // Append form to drop container
+    const dropContainer = document.querySelector(DROP_CONTAINER_SELECTOR);
+    dropContainer.appendChild(form);
+
+    // Add delete button to remove the form
+    removeFormButton(form);
+
+    // Make the form container draggable
+    makeFormContainerDraggable(form);
+}
+
+// Create Star Rating container
+function createStarRatingContainer() {
+    const starRatingContainer = document.createElement('div');
+    starRatingContainer.classList.add('star-rating-container', 'p-5', 'my-5', 'bg-white', 'border-2', 'border-gray-400', 'rounded-md');
+
+    // Star Rating options
+    const starRatingPoints = Array.from({ length: 5 });
+
+    // Create Star Rating options with increasing numbers of stars
+    starRatingPoints.forEach((_, index) => {
+        const starRatingOption = document.createElement('div');
+        starRatingOption.classList.add('star-rating-option', 'flex', 'items-center', 'mb-2');
+        const stars = index + 1;
+        starRatingOption.innerHTML = `
+            <input type="radio" class="m-2" name="starRating" value="${stars}">
+            <label class="m-2">${'<i class="fas fa-star"></i>'.repeat(stars)}</label>
+        `;
+        starRatingContainer.appendChild(starRatingOption);
+    });
+
+    // Add delete button to remove the Star Rating
+    // removeStarRatingButton(starRatingContainer);
+
+    return starRatingContainer;
+}
+
+
+// Function to create a form with Text Field
+function createTextFieldForm() {
+    // Create form elements
+    const form = createFormContainer();
+    const mustAnswerCheckbox = createMustAnswerCheckbox();
+    const questionInput = createQuestionInput();
+    const textFieldContainer = createTextFieldContainer();
+
+    // Append form elements
+    form.appendChild(questionInput);
+    form.appendChild(mustAnswerCheckbox);
+    form.appendChild(textFieldContainer);
+
+    // Append form to drop container
+    const dropContainer = document.querySelector(DROP_CONTAINER_SELECTOR);
+    dropContainer.appendChild(form);
+
+    // Add delete button to remove the form
+    removeFormButton(form);
+
+    // Make the form container draggable
+    makeFormContainerDraggable(form);
+}
+
+// Create Text Field container
+function createTextFieldContainer() {
+    const textFieldContainer = document.createElement('div');
+    textFieldContainer.classList.add('text-field-container', 'p-5', 'my-5', 'bg-white', 'border-2', 'border-gray-400', 'rounded-md');
+
+    // Create a single Text Field option
+    const textFieldOption = document.createElement('div');
+    textFieldOption.classList.add('text-field-option', 'flex', 'items-center', 'mb-2');
+    textFieldOption.innerHTML = `
+        <input type="text" class="m-2 w-full border-b-2 border-gray-400 focus:border-indigo-600 focus:outline-none" placeholder="Answer here">
+    `;
+    textFieldContainer.appendChild(textFieldOption);
+
+    // Add delete button to remove the Text Field
+    // removeTextFieldButton(textFieldContainer);
+
+    return textFieldContainer;
+}
+
+// Function to create a form with Image options
+function createImageForm() {
+    // Create form elements
+    const form = createFormContainer();
+    const questionInput = createQuestionInput();
+    const imageOptionContainer = createImageOptionContainer();
+    const addImageOptionBtn = createAddImageOptionButton(imageOptionContainer);
+
+    // Append form elements
+    form.appendChild(questionInput);
+    form.appendChild(imageOptionContainer);
+    form.appendChild(addImageOptionBtn);
+
+    // Append form to drop container
+    const dropContainer = document.querySelector(DROP_CONTAINER_SELECTOR);
+    dropContainer.appendChild(form);
+
+    // Show one image option initially
+    createImageOption(imageOptionContainer);
+
+    // Add delete button to remove the form
+    removeFormButton(form);
+
+    // Make the form container draggable
+    makeFormContainerDraggable(form);
+}
+
+// Create Image option container
+function createImageOptionContainer() {
+    const imageOptionContainer = document.createElement('div');
+    imageOptionContainer.id = 'image-option-container';
+    return imageOptionContainer;
+}
+
+// Create add Image option button
+function createAddImageOptionButton(imageOptionContainer) {
+    const addImageOptionBtn = document.createElement('button');
+    addImageOptionBtn.id = 'add-image-option';
+    addImageOptionBtn.textContent = 'Add Option';
+    addImageOptionBtn.classList.add('mt-4', 'px-4', 'py-2', 'bg-green-500', 'text-white', 'rounded-md', 'shadow-md', 'hover:bg-green-600', 'focus:outline-none', 'focus:ring-2', 'focus:ring-green-500', 'focus:ring-opacity-50');
+    addImageOptionBtn.addEventListener('click', () => createImageOption(imageOptionContainer));
+    return addImageOptionBtn;
+}
+
+
+// Function to create a new Image option
+function createImageOption(imageOptionContainer) {
+    const newImageOption = document.createElement('div');
+    newImageOption.classList.add('flex', 'pb-2', 'mb-3');
+    newImageOption.innerHTML = `
+        <input type="checkbox" class="m-2" />
+        <input type="file" accept="image/*" class="m-2" />
+        <button class="text-black rounded-full focus:outline-none delete-image-option"><i class="fas fa-trash"></i></button>
+    `;
+    imageOptionContainer.appendChild(newImageOption);
+
+    // Add event listener for delete button
+    const deleteBtn = newImageOption.querySelector('.delete-image-option');
+    deleteBtn.addEventListener('click', () => {
+        newImageOption.remove();
+    });
+}
+
+// Function to create a form with Upload Question
+function createUploadQuestionForm() {
+    // Create form elements
+    const form = createFormContainer();
+    const mustAnswerCheckbox = createMustAnswerCheckbox();
+    const uploadQuestionContainer = createUploadQuestionContainer();
+
+    // Append form elements
+    form.appendChild(mustAnswerCheckbox);
+    form.appendChild(uploadQuestionContainer);
+
+    // Append form to drop container
+    const dropContainer = document.querySelector(DROP_CONTAINER_SELECTOR);
+    dropContainer.appendChild(form);
+
+    // Add delete button to remove the form
+    removeFormButton(form);
+
+    // Make the form container draggable
+    makeFormContainerDraggable(form);
+}
+
+// Create Upload Question container
+function createUploadQuestionContainer() {
+    const uploadQuestionContainer = document.createElement('div');
+    uploadQuestionContainer.classList.add('upload-question-container', 'p-5', 'my-5', 'bg-white', 'border-2', 'border-gray-400', 'rounded-md', 'flex', 'items-center', 'justify-center', 'cursor-pointer');
+
+    const uploadLabel = document.createElement('label');
+    uploadLabel.classList.add('text-center', 'text-gray-600', 'border', 'border-dashed', 'border-gray-400', 'rounded-md', 'p-10', 'w-full', 'h-full', 'flex', 'items-center', 'justify-center', 'gap-2');
+    uploadLabel.setAttribute('for', 'uploadInput');
+
+    // Create the icon
+    const uploadIcon = document.createElement('i');
+    uploadIcon.classList.add('fas', 'fa-upload', 'text-2xl', 'text-gray-600');
+
+    // Create the text
+    const uploadText = document.createElement('span');
+    uploadText.textContent = 'Upload your file';
+
+    // Append the icon and text to the label
+    uploadLabel.appendChild(uploadIcon);
+    uploadLabel.appendChild(uploadText);
+
+    const uploadInput = document.createElement('input');
+    uploadInput.setAttribute('type', 'file');
+    uploadInput.setAttribute('id', 'uploadInput');
+    uploadInput.classList.add('hidden');
+    uploadInput.setAttribute('accept', '.pdf,.doc,.docx');
+
+    uploadQuestionContainer.appendChild(uploadLabel);
+    uploadQuestionContainer.appendChild(uploadInput);
+
+    // Add event listener for file input
+    uploadInput.addEventListener('change', (event) => {
+        const fileName = event.target.files[0].name;
+        uploadText.textContent = fileName;
+    });
+
+    return uploadQuestionContainer;
+}
+
+
